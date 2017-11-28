@@ -16,29 +16,34 @@ describe("dashboard-agent", function () {
   var sandbox;
   var server;
   var agent;
-  var TEST_PORT = 12345;
-
-  before(function () {
-    sandbox = sinon.sandbox.create();
-    process.env[config.PORT_KEY] = TEST_PORT;
-    process.env[config.BLOCKED_THRESHOLD_KEY] = 1;
-    process.env[config.REFRESH_INTERVAL_KEY] = 10;
-  });
-
-  beforeEach(function () {
-    agent = dashboardAgent();
-    server = new SocketIO(TEST_PORT);
-  });
-
-  afterEach(function (done) {
-    agent.destroy();
-    sandbox.restore();
-    server.close(done);
-  });
+  var options = {
+    port: 12345,
+    refreshInterval: 10,
+    blockedThreshold: 1
+  };
 
   describe("initialization", function () {
 
+    before(function () {
+      sandbox = sinon.sandbox.create();
+    });
+
+    beforeEach(function () {
+      server = new SocketIO(options.port);
+    });
+
+    afterEach(function (done) {
+      agent.destroy();
+      sandbox.restore();
+      server.close(done);
+    });
+
     it("should use environment variables for configuration", function (done) {
+      process.env[config.PORT_KEY] = options.port;
+      process.env[config.BLOCKED_THRESHOLD_KEY] = options.blockedThreshold;
+      process.env[config.REFRESH_INTERVAL_KEY] = options.refreshInterval;
+      agent = dashboardAgent();
+
       var checkMetrics = function (metrics) {
         expect(metrics).to.be.an("object");
         expect(metrics.eventLoop.delay).to.be.a("number");
@@ -59,9 +64,77 @@ describe("dashboard-agent", function () {
         });
       });
     });
+
+    it("should use options for configuration", function (done) {
+      agent = dashboardAgent(options);
+
+      var checkMetrics = function (metrics) {
+        expect(metrics).to.be.an("object");
+        expect(metrics.eventLoop.delay).to.be.a("number");
+      };
+
+      server.on("connection", function (socket) {
+        try {
+          expect(socket).to.be.an("object");
+          socket.on("error", done);
+        } catch (err) {
+          done(err);
+        }
+        socket.on("metrics", function (data) {
+          tryCatch(done, function () {
+            socket.removeAllListeners("metrics");
+            checkMetrics(JSON.parse(data));
+          });
+        });
+      });
+    });
+
+    it("should prefer options over environment for configuration", function (done) {
+      process.env[config.PORT_KEY] = options.port + 1;
+      process.env[config.BLOCKED_THRESHOLD_KEY] = options.blockedThreshold + 10;
+      process.env[config.REFRESH_INTERVAL_KEY] = options.refreshInterval + 10;
+      agent = dashboardAgent(options);
+
+      var checkMetrics = function (metrics) {
+        expect(metrics).to.be.an("object");
+        expect(metrics.eventLoop.delay).to.be.a("number");
+      };
+
+      // will not connect if port from env is used
+      server.on("connection", function (socket) {
+        try {
+          expect(socket).to.be.an("object");
+          socket.on("error", done);
+        } catch (err) {
+          done(err);
+        }
+        socket.on("metrics", function (data) {
+          tryCatch(done, function () {
+            socket.removeAllListeners("metrics");
+            checkMetrics(JSON.parse(data));
+          });
+        });
+      });
+    });
   });
 
   describe("reporting", function () {
+
+    before(function () {
+      sandbox = sinon.sandbox.create();
+    });
+
+    beforeEach(function () {
+      agent = dashboardAgent(options);
+      server = new SocketIO(options.port);
+    });
+
+    afterEach(function (done) {
+      agent.destroy();
+      sandbox.restore();
+      server.close(done);
+    });
+
     it("should provide basic metrics", function (done) {
 
       var checkMetrics = function (metrics) {
