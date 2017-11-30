@@ -83,6 +83,18 @@ Most CLI interfaces provide a mechanism for launching other tools. If you're loo
 % nodemon --exec "nodejs-dashboard babel-node" src/index.js
 ```
 
+#### Nodemon
+
+Nodemon and other application restarters can interfere with metric collection and might require more setup to function. Reporting configuration is set in the environment by default to be inherited by the monitored process. This works as long as the monitored process doesn't make a new shell with a new environment. Nodemon is one of these since it launches all commands inside their own shell. In these cases you must pass options to the `DashboardAgent` constructor.
+
+```
+require("nodejs-dashboard/lib/dashboard-agent")({
+  port: 9838,
+  refreshInterval: 1000,
+  blockedThreshold: 1
+});
+```
+
 #### Docker and Docker Compose support
 
 `nodejs-dashboard` can run inside a container if that container has a [TTY](https://en.wikipedia.org/wiki/Pseudoterminal) allocated to it. The [Docker documentation](https://docs.docker.com/engine/reference/run/#foreground) shows how to run a container with an interactive terminal session. Additional the [Docker Compose documentation](https://docs.docker.com/compose/reference/run/) indicates that `docker-compose run` defaults to allocating a TTY and `docker-compose up` defaults to not allocating one.
