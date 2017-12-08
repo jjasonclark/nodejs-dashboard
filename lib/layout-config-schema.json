@@ -27,6 +27,8 @@
               "$ref": "#/definitions/lineGraphView"
             }, {
               "$ref": "#/definitions/customView"
+            }, {
+              "$ref": "#/definitions/platformDetailsView"
             }]
           }
         }
@@ -124,6 +126,24 @@
         }
       },
       "required": ["module"]
+    },
+    "platformDetailsView": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["platformDetails"]
+        },
+        "position": {
+          "$ref": "#/definitions/position"
+        },
+        "borderColor": {
+          "type": "string"
+        }
+      },
+      "required": ["type"]
     },
     "position": {
       "oneOf": [{
