@@ -51,7 +51,7 @@ describe("GotoTimeView", function () {
 
       expect(gotoTimeView).to.have.property("node").which.is.an.instanceOf(blessed.node);
       expect(gotoTimeView).to.have.property("form").which.is.an.instanceOf(blessed.form);
-      expect(gotoTimeView).to.have.property("timeRangeLabel").which.is.an.instanceOf(blessed.text);
+      expect(gotoTimeView).to.have.property("instructionsLabel").which.is.an.instanceOf(blessed.text);
       expect(gotoTimeView).to.have.property("textBox").which.is.an.instanceOf(blessed.textbox);
       expect(gotoTimeView).to.have.property("errorText").which.is.an.instanceOf(blessed.text);
       expect(gotoTimeView).to.have.property("acceptButton").which.is.an.instanceOf(blessed.button);
@@ -66,14 +66,15 @@ describe("GotoTimeView", function () {
       createTestContainer(false);
 
       var gotoTimeView = new GotoTimeView(options);
-      var spyGetTimeRangeLabel = sandbox.spy(gotoTimeView, "getTimeRangeLabel");
+      sandbox.stub(gotoTimeView, "isVisible").returns(true);
+      var spyGetInstructionsLabel = sandbox.spy(gotoTimeView, "getInstructionsLabel");
 
       gotoTimeView.screen.emit("metrics");
 
-      expect(spyGetTimeRangeLabel).to.have.been.calledOnce;
+      expect(spyGetInstructionsLabel).to.have.been.calledOnce;
 
-      expect(gotoTimeView.timeRangeLabel.setContent)
-        .to.have.been.calledWithExactly(spyGetTimeRangeLabel.returnValues[0]);
+      expect(gotoTimeView.instructionsLabel.setContent)
+        .to.have.been.calledWithExactly(spyGetInstructionsLabel.returnValues[0]);
     });
   });
 
@@ -190,7 +191,7 @@ describe("GotoTimeView", function () {
 
       var gotoTimeView = new GotoTimeView(options);
       var spyValidate = sandbox.spy(gotoTimeView, "validate");
-      var spyHide = sandbox.spy(gotoTimeView, "hide");
+      var spyGotoTimeValue = sandbox.spy(options.metricsProvider, "gotoTimeValue");
 
       gotoTimeView.form.emit("submit", mockData);
 
@@ -199,11 +200,9 @@ describe("GotoTimeView", function () {
         .and.to.have.been.calledWithExactly(mockData.textBox);
 
       expect(spyValidate)
-        .to.have.been.calledOnce
-        .and.to.have.been.calledWithExactly(mockData)
-        .and.to.have.returned(mockValidatedData);
+        .to.have.been.calledOnce;
 
-      expect(spyHide).to.have.been.calledOnce;
+      expect(spyGotoTimeValue).to.have.been.calledOnce;
     });
 
     it("validates data received and displays error when invalid", function () {
@@ -229,7 +228,6 @@ describe("GotoTimeView", function () {
 
       expect(spyValidate)
         .to.have.been.calledOnce
-        .and.to.have.been.calledWithExactly(mockData)
         .and.to.have.thrown(mockError);
 
       expect(gotoTimeView.errorText.setContent)
