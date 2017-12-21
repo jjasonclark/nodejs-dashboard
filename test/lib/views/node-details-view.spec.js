@@ -40,6 +40,7 @@ describe("NodeDetailsView", function () {
       }).sort();
       expect(labels).to.eql([
         "LTS",
+        "Uptime",
         "Version"
       ]);
     });
