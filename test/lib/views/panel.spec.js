@@ -32,7 +32,7 @@ describe("Panel", function () {
     });
   };
 
-  describe("copied tests", function () {
+  describe("layout panel", function () {
     it("should create fullscreen view", function () {
       var layouts = createPanel([{
         views: [
